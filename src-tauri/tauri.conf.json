@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "gif-selettis",
+  "productName": "looply",
   "version": "0.1.0",
-  "identifier": "com.gif-selettis.app",
+  "identifier": "com.looply.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "gif-selettis",
+        "title": "Looply",
         "width": 550,
         "height": 700
       }
