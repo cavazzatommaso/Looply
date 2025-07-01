@@ -1,0 +1,16 @@
+import { invoke } from '@tauri-apps/api/core';
+
+
+export async function getFileFromPath(path: string): Promise<File> {
+  const [content, mime]: [number[], string] = await invoke('read_file', { path });
+
+  const bytes = new Uint8Array(content);
+
+  const name = path.split('/').pop() || 'unknown';
+
+  return new File([bytes], name, { type: mime });
+}
+
+export async function getFilesFromPaths(paths: string[]): Promise<File[]> {
+  return Promise.all(paths.map(getFileFromPath));
+}
