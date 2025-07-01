@@ -6,6 +6,7 @@
   export let min: number = 0;
   export let max: number = 100;
   export let step: number = 1;
+  
 
 </script>
 
