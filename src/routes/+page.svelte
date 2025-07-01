@@ -11,7 +11,7 @@
   import { listen } from "@tauri-apps/api/event";
   import { getFilesFromPaths } from "$lib/utils";
   import Dropzone from "svelte-file-dropzone";
-  import { writable } from "svelte/store";
+  import { writable, type Writable } from "svelte/store";
 
   let ffmpeg: FFmpeg;
   let isLoading = false;
@@ -25,8 +25,8 @@
   let files: UIFile[] = [];
   let generatedGif: string = "";
   let outputUrl: string | null = null;
-  let timeValue: number = 0.5;
-  let bitDepthValue: number = 256;
+  let timeValue: Writable<number> = writable(0.5);
+  let bitDepthValue: Writable<number> = writable(0.5);
   const KEY_time = "gif_time";
   const KEY_bit = "gif_bit";
   let isOver: boolean = false;
@@ -44,20 +44,30 @@
     addFiles(images);
   });
 
+  let timeValueTimer: number | undefined;
+
+  const debounce = () => {
+    clearTimeout(timeValueTimer);
+    timeValueTimer = setTimeout(() => {
+      createGif();
+    }, 1000);
+  };
+
+  timeValue.subscribe(debounce);
+
   onMount(async () => {
     isLoading = true;
 
     const storedTime = localStorage.getItem(KEY_time) || 0.5;
     const storedBit = localStorage.getItem(KEY_bit) || 256;
 
-    timeValue = Number(storedTime);
-    bitDepthValue = Number(storedBit);
+    timeValue.set(Number(storedTime));
+    bitDepthValue.set(Number(storedBit));
 
     const unlisten = await getCurrentWebview().onDragDropEvent((event) => {
       if (event.payload.type === "over") {
         isOver = true;
       } else if (event.payload.type === "drop") {
-        // console.log("User dropped", event.payload.paths);
         isOver = false;
       } else {
         isOver = false;
@@ -65,6 +75,12 @@
     });
 
     ffmpeg = new FFmpeg();
+    await loadffmpeg();
+    isLoading = false;
+    isReady = true;
+  });
+
+  async function loadffmpeg() {
     await ffmpeg.load({
       coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
       wasmURL: await toBlobURL(
@@ -72,13 +88,11 @@
         "application/wasm",
       ),
     });
-    isLoading = false;
-    isReady = true;
-  });
+  }
 
   function saveConfig() {
-    localStorage.setItem(KEY_time, timeValue.toString());
-    localStorage.setItem(KEY_bit, bitDepthValue.toString());
+    localStorage.setItem(KEY_time, $timeValue.toString());
+    localStorage.setItem(KEY_bit, $bitDepthValue.toString());
   }
 
   function addFiles(newFiles: File[]) {
@@ -88,6 +102,13 @@
     }));
 
     files = [...files, ...factoredFiles];
+    createGif();
+  }
+
+  function deleteFile(fileId: string) {
+    files = files.filter((file) => file.id !== fileId);
+    console.log(files);
+
     createGif();
   }
 
@@ -104,20 +125,16 @@
 
   async function createGif() {
     if (!isReady || files.length === 0) {
-      alert("FFmpeg not ready or no files.");
+      // alert("FFmpeg not ready or no files.");
       return;
     }
 
     isLoading = true;
 
-    const tempDir = "/tmp";
+    ffmpeg.terminate();
+    await loadffmpeg();
 
-    try {
-      await ffmpeg.deleteDir(tempDir);
-      await ffmpeg.createDir(tempDir);
-    } catch {
-      // Ignore if doesn't exist
-    }
+    const tempDir = "/tmp";
 
     for (const [i, file] of files.entries()) {
       const ext = file.file.name.split(".").pop() || "jpeg";
@@ -128,22 +145,28 @@
       await ffmpeg.exec(["-i", inputName, pngName]);
     }
 
-    const fps = (1 / timeValue).toFixed(2);
+    const fps = (1 / $timeValue).toFixed(2);
 
-    await ffmpeg.exec([
-      "-framerate",
-      `${fps}`,
-      "-start_number",
-      "0",
-      "-i",
-      `${tempDir}/img%d.png`,
-      "-loop",
-      "0",
-      "output.gif",
-    ]);
+    try {
+      await ffmpeg.exec([
+        "-framerate",
+        `${fps}`,
+        "-start_number",
+        "0",
+        "-i",
+        `${tempDir}/img%d.png`,
+        "-loop",
+        "0",
+        "output.gif",
+      ]);
 
-    const data = await ffmpeg.readFile("output.gif");
-    generatedGif = URL.createObjectURL(new Blob([data], { type: "image/gif" }));
+      const data = await ffmpeg.readFile("output.gif");
+      generatedGif = URL.createObjectURL(
+        new Blob([data], { type: "image/gif" }),
+      );
+    } catch (error) {
+      generatedGif = "";
+    }
 
     isLoading = false;
   }
@@ -154,9 +177,10 @@
       filters: [{ name: "GIF", extensions: ["gif"] }],
     });
 
-    if (selected) {
-      outputUrl = selected;
-    }
+    if (!selected) return;
+
+    outputUrl = selected;
+
     const data = await ffmpeg.readFile("output.gif");
 
     await invoke("save_gif", {
@@ -185,21 +209,24 @@
           use:dndzone={{ items: files, flipDurationMs: 300 }}
           on:consider={handleDndTrigger}
           on:finalize={handleDndTrigger}
-          class="flex flex-wrap gap-4 flex-col items-center"
+          class="flex flex-wrap gap-2 flex-col items-center"
         >
           {#each files as file (file.id)}
-            <div class={`m-4`}>
+            <div class={`relative p-2 group`}>
               {#if file}
-                <span class="relative">
-                  <span class="absolute top-0 -left-6 block text-black"
-                    >{files.indexOf(file)}</span
-                  >
-                  <img
-                    src={URL.createObjectURL(file.file)}
-                    alt={file.file.name}
-                    class="relative object-fill rounded-md"
-                  />
-                </span>
+                <span class="absolute top-0 -left-2 block text-black"
+                  >{files.indexOf(file)}</span
+                >
+                <button
+                  class="hidden z-100 absolute top-2 right-2 group-hover:flex w-4 aspect-square bg-gray-200 translate-x-1/2 -translate-y-1/2 rounded-xl items-center justify-center text-sky-500 text-sm cursor-pointer hover:scale-110 active:scale-50 duration-300"
+                  on:click|stopPropagation|preventDefault={() =>
+                    deleteFile(file.id)}>x</button
+                >
+                <img
+                  src={URL.createObjectURL(file.file)}
+                  alt={file.file.name}
+                  class="relative object-fill rounded-md group-hover:mask-r-from-50% duration-300"
+                />
               {/if}
             </div>
           {/each}
@@ -234,7 +261,7 @@
               <Slider
                 id="time-slider"
                 bind:value={timeValue}
-                min={0}
+                min={0.25}
                 max={5}
                 step={0.25}
               />
@@ -262,16 +289,16 @@
             on:click|preventDefault={saveConfig}
           >
             +
-      </button>
-          <div class="text-center">{timeValue}</div>
+          </button>
+          <div class="text-center">{$timeValue}</div>
           <div class="divider divider-horizontal m-0"></div>
-          <div class="text-center">{bitDepthValue}</div>
+          <div class="text-center">{$bitDepthValue}</div>
         </div>
         <button
           class="w-full h-full bg-sky-400 rounded-xl flex items-center justify-center cursor-pointer"
           on:click={save_gif}
         >
-          <img src={arrow} alt="" srcset="" />
+          <img src={arrow} alt="Save gif button" srcset="" />
         </button>
       </div>
     </div>

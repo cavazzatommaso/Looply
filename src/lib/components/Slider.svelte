@@ -1,16 +1,19 @@
 <script lang="ts">
+  import type { Writable } from "svelte/store";
+
   export let id: string;
-  export let value: number;
+  export let value: Writable<number>;
   export let min: number = 0;
   export let max: number = 100;
   export let step: number = 1;
+
 </script>
 
 <div class="relative w-full h-full flex items-center">
   <input
     type="range"
     {id}
-    bind:value
+    bind:value={$value}
     {min}
     {max}
     {step}
