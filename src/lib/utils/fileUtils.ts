@@ -1,5 +1,4 @@
-import { invoke } from '@tauri-apps/api/core';
-
+import { invoke } from "@tauri-apps/api/core";
 
 export async function getFileFromPath(path: string): Promise<File> {
   const [content, mime]: [number[], string] = await invoke('read_file', { path });
@@ -13,4 +12,16 @@ export async function getFileFromPath(path: string): Promise<File> {
 
 export async function getFilesFromPaths(paths: string[]): Promise<File[]> {
   return Promise.all(paths.map(getFileFromPath));
+}
+
+export type UIFile = {
+  id: string;
+  file: File;
+};
+
+export function factorFilesForUI(newFiles: File[]): UIFile[] {
+  return newFiles.map((file: File) => ({
+    id: crypto.randomUUID(),
+    file,
+  }));
 }
