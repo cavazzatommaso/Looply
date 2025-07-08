@@ -16,7 +16,6 @@
   } from "$lib/utils/fileUtils";
 
   import DropzoneArea from "$lib/components/DropzoneArea.svelte";
-  import GifDisplay from "$lib/components/GifDisplay.svelte";
   import SettingsPanel from "$lib/components/SettingsPanel.svelte";
 
   // FFmpeg related state
@@ -32,7 +31,7 @@
 
   // Configuration state
   let timeValue: Writable<number> = writable(0.5);
-  let bitDepthValue: Writable<number> = writable(0.5);
+  let bitDepthValue: Writable<number> = writable(256);
   const KEY_time = "gif_time";
   const KEY_bit = "gif_bit";
   let isConfigSaved: boolean = false;
