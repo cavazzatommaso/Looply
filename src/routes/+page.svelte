@@ -13,10 +13,10 @@
     getFilesFromPaths,
     factorFilesForUI,
     type UIFile,
+    getImageSize,
   } from "$lib/utils/fileUtils";
 
   import DropzoneArea from "$lib/components/DropzoneArea.svelte";
-  import GifDisplay from "$lib/components/GifDisplay.svelte";
   import SettingsPanel from "$lib/components/SettingsPanel.svelte";
 
   // FFmpeg related state
@@ -141,13 +141,29 @@
 
     const tempDir = "/tmp";
 
+    const sizes = await Promise.all(files.map((f) => getImageSize(f.file)));
+    let maxWidth = 0;
+    let maxHeight = 0;
+    for (const size of sizes) {
+      if (size.width > maxWidth) maxWidth = size.width;
+      if (size.height > maxHeight) maxHeight = size.height;
+    }
+
     for (const [i, file] of files.entries()) {
       const ext = file.file.name.split(".").pop() || "jpeg";
       const inputName = `${tempDir}/img${i}.${ext}`;
       await ffmpeg.writeFile(inputName, await fetchFile(file.file));
 
       const pngName = `${tempDir}/img${i}.png`;
-      await ffmpeg.exec(["-i", inputName, pngName]);
+      await ffmpeg.exec([
+        "-i",
+        inputName,
+        "-vf",
+        `scale=${maxWidth}:${maxHeight}:force_original_aspect_ratio=decrease,pad=${maxWidth}:${maxHeight}:(ow-iw)/2:(oh-ih)/2:color=black@0`,
+        "-pix_fmt",
+        "rgba",
+        pngName,
+      ]);
     }
 
     const fps = (1 / $timeValue).toFixed(2);
