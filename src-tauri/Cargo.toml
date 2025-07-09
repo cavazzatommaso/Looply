@@ -1,6 +1,6 @@
 [package]
 name = "Looply"
-version = "0.1.5"
+version = "0.1.6"
 description = "Create custom gif"
 authors = ["Cavazza Tommaso"]
 edition = "2024"
@@ -26,5 +26,9 @@ tauri-plugin-dialog = "2"
 tempfile = "3.2"
 tauri-plugin-fs = "2"
 infer = "0.19.0"
+tauri-plugin-process = "2"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = "2"
 
 
