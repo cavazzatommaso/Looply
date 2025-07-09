@@ -18,6 +18,7 @@
 
   import DropzoneArea from "$lib/components/DropzoneArea.svelte";
   import SettingsPanel from "$lib/components/SettingsPanel.svelte";
+  import { checkForAppUpdates } from "$lib/utils/updater";
 
   // FFmpeg related state
   let ffmpeg: FFmpeg;
@@ -56,7 +57,11 @@
 
   onMount(async () => {
     isLoading = true;
-
+    try {
+      await checkForAppUpdates(false);
+    } catch (error) {
+      console.error(`Error updating: ${error}`);
+    }
     const storedTime = localStorage.getItem(KEY_time);
     const storedBit = localStorage.getItem(KEY_bit);
 

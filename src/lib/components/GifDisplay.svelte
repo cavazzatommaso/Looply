@@ -19,7 +19,6 @@
         alt="Generated Gif"
         class="min-h-32 object-contain border-3 border-gray-200 rounded-xl"
       />
-      {isError}
     {/if}
   {:else}
     <div

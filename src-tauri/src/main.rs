@@ -7,10 +7,9 @@ use std::io::Write;
 
 #[tauri::command]
 async fn read_file(path: String) -> Result<(Vec<u8>, String), String> {
-  use std::fs;
+    use std::fs;
 
-    let content = fs::read(&path)
-        .map_err(|e| format!("Failed to read file: {}", e))?;
+    let content = fs::read(&path).map_err(|e| format!("Failed to read file: {}", e))?;
 
     let mime = infer::get(&content)
         .map(|t| t.mime_type())
@@ -21,10 +20,7 @@ async fn read_file(path: String) -> Result<(Vec<u8>, String), String> {
 }
 
 #[tauri::command]
-async fn save_gif(
-    path: String,
-    data: Vec<u8>,
-) -> Result<String, String> {
+async fn save_gif(path: String, data: Vec<u8>) -> Result<String, String> {
     match std::fs::File::create(&path) {
         Ok(mut file) => match file.write_all(&data) {
             Ok(_) => Ok(path.to_string()),
@@ -34,12 +30,13 @@ async fn save_gif(
     }
 }
 
-
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
-                .invoke_handler(tauri::generate_handler![read_file,save_gif])
+        .invoke_handler(tauri::generate_handler![read_file, save_gif])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
