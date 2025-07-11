@@ -1,6 +1,6 @@
 # Looply
 
-![Logo](https://github.com/cavazzatommaso/Looply/blob/main/static/app-icon.png?raw=true)
+![Logo](https://github.com/cavazzatommaso/Looply/blob/main/src-tauri/icons/128x128@2x.png?raw=true)
 
 A simple cross-platform desktop app to create GIFs from image sequences.  
 Built with **Tauri**, **Svelte**, **Tailwind CSS**, and **[FFmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm)**
