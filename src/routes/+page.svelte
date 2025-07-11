@@ -68,6 +68,10 @@
     if (storedTime !== null) timeValue.set(Number(storedTime));
     if (storedBit !== null) bitDepthValue.set(Number(storedBit));
 
+    listen('check-update', async () => {      
+            await checkForAppUpdates(true);
+    });
+
     dragDropListener = listen<DragDropPayload>(
       "tauri://drag-drop",
       async (event) => {

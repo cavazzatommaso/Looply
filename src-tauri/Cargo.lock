@@ -7,6 +7,7 @@ name = "Looply"
 version = "0.1.6"
 dependencies = [
  "infer",
+ "log",
  "serde",
  "serde_json",
  "tauri",
