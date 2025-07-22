@@ -19,6 +19,7 @@
   import DropzoneArea from "$lib/components/DropzoneArea.svelte";
   import SettingsPanel from "$lib/components/SettingsPanel.svelte";
   import { checkForAppUpdates } from "$lib/utils/updater";
+    import { RotateCcw } from "lucide-svelte";
 
   // FFmpeg related state
   let ffmpeg: FFmpeg;
@@ -255,13 +256,25 @@
 
 <div class="h-screen w-screen bg-white p-2">
   <div class="h-full w-full bg-gray-200 rounded-md grid grid-cols-2 gap-1 p-2">
-
+     {#if files.length > 0}
+      <button
+        class="absolute top-10 right-1/2 translate-x-2 w-10 p-2 z-50 aspect-square bg-sky-400 rounded-full flex items-center justify-center text-white active:scale-75 hover:-rotate-90 duration-300 !cursor-pointer"
+        onclick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          reset();
+        }}
+      >
+        <RotateCcw size="20" />
+      </button>
+      {/if}
     <div class="h-full flex flex-col overflow-y-auto scrollbar-hide">
       <DropzoneArea
         {files}
         addfiles={(files) => addFiles(files)}
         deletefile={(file) => deleteFile(file)}
         reorderfiles={(files) => reorderFiles(files)}
+        reset={reset}
         dndcomplete={createGif}
       />
     </div>

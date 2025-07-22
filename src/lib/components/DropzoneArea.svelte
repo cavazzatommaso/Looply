@@ -2,7 +2,7 @@
   import { dndzone } from "svelte-dnd-action";
   import Dropzone from "svelte-file-dropzone";
   import type { UIFile } from "$lib/utils/fileUtils";
-  import { RotateCcw } from 'lucide-svelte';
+  import { RotateCcw, Trash } from "lucide-svelte";
 
   type DropzoneProps = {
     files: UIFile[];
@@ -40,9 +40,7 @@
   }
 </script>
 
-<div
-  class="p-2 grid grid-cols-1 grid-rows-[min-content_1fr] gap-2 flex-1"
->
+<div class="p-2 grid grid-cols-1 grid-rows-[min-content_1fr] gap-2 flex-1">
   <div class="text-xl font-mono text-center text-sky-500">edit</div>
   <Dropzone on:drop={handleFilesSelect} containerClasses={"relative"}>
     <div
@@ -51,16 +49,7 @@
       onfinalize={handleDndTrigger}
       class="flex flex-wrap gap-2 flex-col items-center"
     >
-      <button
-        class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 w-10 z-50 aspect-square bg-sky-400 rounded-full flex items-center justify-center text-white active:scale-50 hover:-rotate-90 duration-300"
-        onclick={(e) => {
-          e.stopPropagation()
-          e.preventDefault();
-          reset()
-        }}
-      >
-        <RotateCcw />
-      </button>
+    
       {#each files as file (file.id)}
         <div class={`relative p-2 group`}>
           {#if file}
@@ -73,7 +62,7 @@
                 e.stopPropagation();
                 e.preventDefault();
                 deleteFile(file.id);
-              }}>x</button
+              }}><Trash /></button
             >
             <img
               src={URL.createObjectURL(file.file)}
