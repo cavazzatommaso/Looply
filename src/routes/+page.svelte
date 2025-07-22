@@ -68,8 +68,8 @@
     if (storedTime !== null) timeValue.set(Number(storedTime));
     if (storedBit !== null) bitDepthValue.set(Number(storedBit));
 
-    listen('check-update', async () => {      
-            await checkForAppUpdates(true);
+    listen("check-update", async () => {
+      await checkForAppUpdates(true);
     });
 
     dragDropListener = listen<DragDropPayload>(
@@ -250,15 +250,17 @@
 
 <div class="h-screen w-screen bg-white p-2">
   <div class="h-full w-full bg-gray-200 rounded-md grid grid-cols-2 gap-1 p-2">
-    <DropzoneArea
-      {files}
-      addfiles={(files) => addFiles(files)}
-      deletefile={(file) => deleteFile(file)}
-      reorderfiles={(files) => reorderFiles(files)}
-      dndcomplete={createGif}
-    />
+    <div class="h-full flex flex-col overflow-y-auto scrollbar-hide">
+      <DropzoneArea
+        {files}
+        addfiles={(files) => addFiles(files)}
+        deletefile={(file) => deleteFile(file)}
+        reorderfiles={(files) => reorderFiles(files)}
+        dndcomplete={createGif}
+      />
+    </div>
 
-    <div class="h-full flex flex-col gap-2 p-2">
+    <div class="h-full flex flex-col gap-2 p-2 overflow-y-auto scrollbar-hide">
       <div class="text-xl font-mono text-center text-sky-500">export</div>
       <SettingsPanel
         {files}
