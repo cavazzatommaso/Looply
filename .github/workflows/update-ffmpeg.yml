@@ -1,0 +1,43 @@
+name: Update FFmpeg Core
+
+on:
+  workflow_dispatch: # Allows manual triggering from the GitHub UI
+
+jobs:
+  update-ffmpeg:
+    runs-on: ubuntu-latest # Specifies the runner environment
+
+    # Grant write permissions to the GITHUB_TOKEN for pushing changes.
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4 # Checks out your repository code
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4 # Sets up Node.js environment
+        with:
+          node-version: 'lts/*' # Use the latest LTS version of Node.js
+
+      - name: Run FFmpeg Core Update Script
+        run: node scripts/update-ffmpeg-core.mjs # Executes your update script
+
+      - name: Configure Git and Commit Changes
+        id: commit_push # Added an ID to potentially check its output if needed later
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add src/ lib/ 
+
+          if git diff --cached --quiet; then
+            echo "No FFmpeg core changes detected. Skipping commit and push."
+            # You could set an output here if another step needed to know this:
+            # echo "::set-output name=pushed::false"
+          else
+            echo "FFmpeg core changes detected. Committing and pushing."
+            git commit -m "chore: update FFmpeg core"
+            git push
+            # echo "::set-output name=pushed::true"
+          fi
