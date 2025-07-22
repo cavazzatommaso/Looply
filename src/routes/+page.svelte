@@ -48,8 +48,8 @@
     paths: string[];
     position: { x: number; y: number };
   };
-  
-  const baseURL = `/ffmpeg/${ffmpegConfig.version}`;  
+
+  const baseURL = `/ffmpeg/${ffmpegConfig.version}`;
 
   const debouncedCreateGif = debounce(() => {
     createGif();
@@ -163,37 +163,43 @@
       if (size.height > maxHeight) maxHeight = size.height;
     }
 
+    const pngFileNames = [];
+
     for (const [i, file] of files.entries()) {
       const ext = file.file.name.split(".").pop() || "jpeg";
-      const inputName = `${tempDir}/img${i}.${ext}`;
-      await ffmpeg.writeFile(inputName, await fetchFile(file.file));
-
+      const inputName = `${tempDir}/img_original_${i}.${ext}`;
       const pngName = `${tempDir}/img${i}.png`;
-      await ffmpeg.exec([
-        "-i",
-        inputName,
-        "-vf",
-        `scale=${maxWidth}:${maxHeight}:force_original_aspect_ratio=decrease,pad=${maxWidth}:${maxHeight}:(ow-iw)/2:(oh-ih)/2:color=black@0`,
-        "-pix_fmt",
-        "rgba",
-        pngName,
-      ]);
+      pngFileNames.push(pngName);
+
+      try {
+        await ffmpeg.writeFile(inputName, await fetchFile(file.file));
+
+        await ffmpeg.exec([
+          "-i",
+          inputName,
+          "-vf",
+          `scale=${maxWidth}:${maxHeight}:force_original_aspect_ratio=decrease,pad=${maxWidth}:${maxHeight}:(ow-iw)/2:(oh-ih)/2:color=black@0`,
+          "-pix_fmt",
+          "rgba",
+          pngName,
+        ]);
+      } catch (e) {
+        console.error("Error processing image:", file.file.name, e);
+        isError = true;
+        isLoading = false;
+        return;
+      } finally {
+        try {
+          await ffmpeg.deleteFile(inputName);
+        } catch (delError) {
+          console.warn(`Could not delete ${inputName}:`, delError);
+        }
+      }
     }
 
     const fps = (1 / $timeValue).toFixed(2);
     const colors = $bitDepthValue;
-
-    await ffmpeg.exec([
-      "-framerate",
-      `${fps}`,
-      "-start_number",
-      "0",
-      "-i",
-      `${tempDir}/img%d.png`,
-      "-vf",
-      `palettegen=max_colors=${colors}`,
-      `${tempDir}/palette.png`,
-    ]);
+    const paletteName = `${tempDir}/palette.png`;
 
     try {
       await ffmpeg.exec([
@@ -203,8 +209,20 @@
         "0",
         "-i",
         `${tempDir}/img%d.png`,
+        "-vf",
+        `palettegen=max_colors=${colors}`,
+        paletteName,
+      ]);
+
+      await ffmpeg.exec([
+        "-framerate",
+        `${fps}`,
+        "-start_number",
+        "0",
         "-i",
-        `${tempDir}/palette.png`,
+        `${tempDir}/img%d.png`,
+        "-i",
+        paletteName,
         "-lavfi",
         "paletteuse=dither=bayer:bayer_scale=4.4",
         "-loop",
@@ -220,7 +238,20 @@
     } catch (error) {
       generatedGif = "";
       isError = true;
-      console.error(error);
+      console.error("FFmpeg conversion error:", error);
+    } finally {
+      for (const pngFile of pngFileNames) {
+        try {
+          await ffmpeg.deleteFile(pngFile);
+        } catch (delError) {
+          console.warn(`Could not delete ${pngFile}:`, delError);
+        }
+      }
+      try {
+        await ffmpeg.deleteFile(paletteName);
+      } catch (delError) {
+        console.warn(`Could not delete ${paletteName}:`, delError);
+      }
     }
 
     isLoading = false;
