@@ -5,13 +5,13 @@ import { relaunch } from "@tauri-apps/plugin-process";
 export async function checkForAppUpdates(onUserClick: boolean) {
     const update = await check();
     if (update) {
-        console.log(
-            `found update ${update.version} from ${update.date} with notes ${update.body}`
-        );
+        // console.log(
+        //     `found update ${update.version} from ${update.date} with notes ${update.body}`
+        // );
         let downloaded = 0;
         let contentLength: number | undefined = 0;
         const yes = await ask(
-            `New update ${update.version} is available!\n\nRelease notes: ${update.body}`,
+            `New update ${update.version} is available!\n\nCheck release notes on github`,
             {
                 title: "Update Available",
                 kind: "info",
