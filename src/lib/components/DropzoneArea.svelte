@@ -38,7 +38,7 @@
 </script>
 
 <div
-  class="p-2 grid grid-cols-1 grid-rows-[min-content_1fr] gap-2 overflow-x-hidden"
+  class="p-2 grid grid-cols-1 grid-rows-[min-content_1fr] gap-2 flex-1"
 >
   <div class="text-xl font-mono text-center text-sky-500">edit</div>
   <Dropzone on:drop={handleFilesSelect}>
