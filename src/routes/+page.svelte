@@ -132,6 +132,11 @@
     createGif();
   }
 
+  function reset() {
+    files = []
+    createGif();
+  }
+
   function reorderFiles(reorderedItems: UIFile[]) {
     files = reorderedItems;
   }
@@ -250,6 +255,7 @@
 
 <div class="h-screen w-screen bg-white p-2">
   <div class="h-full w-full bg-gray-200 rounded-md grid grid-cols-2 gap-1 p-2">
+
     <div class="h-full flex flex-col overflow-y-auto scrollbar-hide">
       <DropzoneArea
         {files}
