@@ -132,6 +132,11 @@
     createGif();
   }
 
+  function reset() {
+    files = []
+    createGif();
+  }
+
   function reorderFiles(reorderedItems: UIFile[]) {
     files = reorderedItems;
   }
@@ -255,6 +260,7 @@
       addfiles={(files) => addFiles(files)}
       deletefile={(file) => deleteFile(file)}
       reorderfiles={(files) => reorderFiles(files)}
+      reset={reset}
       dndcomplete={createGif}
     />
 

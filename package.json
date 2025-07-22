@@ -24,6 +24,7 @@
     "@tauri-apps/plugin-updater": "^2.9.0",
     "daisyui": "^5.0.43",
     "ffmpeg": "^0.0.4",
+    "lucide-svelte": "^0.525.0",
     "postcss-cli": "^11.0.1",
     "svelte-dnd-action": "^0.9.63",
     "svelte-file-dropzone": "^2.0.9"
