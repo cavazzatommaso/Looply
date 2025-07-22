@@ -46,9 +46,9 @@
         <Slider
           id="time-slider"
           bind:value={timeValue}
-          min={0.25}
+          min={0.1}
           max={5}
-          step={0.25}
+          step={0.1}
         />
       </div>
     </div>
@@ -59,7 +59,7 @@
         <Slider
           id="bit-slider"
           bind:value={bitDepthValue}
-          step={[2, 4, 8, 16, 32, 64, 128, 256]}
+          step={[4, 8, 16, 32, 64, 128, 256]}
         />
       </div>
     </div>
