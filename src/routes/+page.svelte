@@ -1,6 +1,7 @@
 <script lang="ts">
   import { FFmpeg } from "@ffmpeg/ffmpeg";
-  import { fetchFile, toBlobURL } from "@ffmpeg/util";
+  import { fetchFile } from "@ffmpeg/util";
+  import ffmpegConfig from "$lib/assets/ffmpeg-version.json";
   import { onDestroy, onMount } from "svelte";
   import { save } from "@tauri-apps/plugin-dialog";
   import { invoke } from "@tauri-apps/api/core";
@@ -19,7 +20,7 @@
   import DropzoneArea from "$lib/components/DropzoneArea.svelte";
   import SettingsPanel from "$lib/components/SettingsPanel.svelte";
   import { checkForAppUpdates } from "$lib/utils/updater";
-    import { RotateCcw } from "lucide-svelte";
+  import { RotateCcw } from "lucide-svelte";
 
   // FFmpeg related state
   let ffmpeg: FFmpeg;
@@ -47,7 +48,8 @@
     paths: string[];
     position: { x: number; y: number };
   };
-  const baseURL = "https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm";
+  
+  const baseURL = `/ffmpeg/${ffmpegConfig.version}`;  
 
   const debouncedCreateGif = debounce(() => {
     createGif();
@@ -104,11 +106,8 @@
   async function loadffmpeg() {
     // ffmpeg.on("log", ({ message }) => console.log(message));
     await ffmpeg.load({
-      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, "text/javascript"),
-      wasmURL: await toBlobURL(
-        `${baseURL}/ffmpeg-core.wasm`,
-        "application/wasm",
-      ),
+      coreURL: `${baseURL}/ffmpeg-core.js`,
+      wasmURL: `${baseURL}/ffmpeg-core.wasm`,
     });
   }
 
@@ -134,7 +133,7 @@
   }
 
   function reset() {
-    files = []
+    files = [];
     createGif();
   }
 
@@ -256,7 +255,7 @@
 
 <div class="h-screen w-screen bg-white p-2">
   <div class="h-full w-full bg-gray-200 rounded-md grid grid-cols-2 gap-1 p-2">
-     {#if files.length > 0}
+    {#if files.length > 0}
       <button
         class="absolute top-10 right-1/2 translate-x-2 w-10 p-2 z-50 aspect-square bg-sky-400 rounded-full flex items-center justify-center text-white active:scale-75 hover:-rotate-90 duration-300 !cursor-pointer"
         onclick={(e) => {
@@ -267,14 +266,14 @@
       >
         <RotateCcw size="20" />
       </button>
-      {/if}
+    {/if}
     <div class="h-full flex flex-col overflow-y-auto scrollbar-hide">
       <DropzoneArea
         {files}
         addfiles={(files) => addFiles(files)}
         deletefile={(file) => deleteFile(file)}
         reorderfiles={(files) => reorderFiles(files)}
-        reset={reset}
+        {reset}
         dndcomplete={createGif}
       />
     </div>
