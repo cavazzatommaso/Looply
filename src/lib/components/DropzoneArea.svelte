@@ -22,7 +22,7 @@
   }: DropzoneProps = $props();
 
   function handleFilesSelect(e: CustomEvent) {
-    const { acceptedFiles } = e.detail;
+    const { acceptedFiles } = e.detail;    
     addfiles(acceptedFiles);
   }
 
@@ -42,7 +42,7 @@
 
 <div class="p-2 grid grid-cols-1 grid-rows-[min-content_1fr] gap-2 flex-1">
   <div class="text-xl font-mono text-center text-sky-500">edit</div>
-  <Dropzone on:drop={handleFilesSelect} containerClasses={"relative"}>
+  <Dropzone on:drop={handleFilesSelect} containerClasses={"relative"} accept="image/*">
     <div
       use:dndzone={{ items: files, flipDurationMs: 300 }}
       onconsider={handleDndTrigger}
