@@ -13,6 +13,8 @@
     isLoading: boolean;
     isError: boolean;
     generatedGif: string;
+    progressStatus: string;
+    progressPercent: number;
     saveConfig: () => void;
     saveGif: () => void;
   };
@@ -24,6 +26,8 @@
     isLoading,
     isError,
     generatedGif,
+    progressStatus,
+    progressPercent,
     saveConfig,
     saveGif,
   }: SettingsPanelProps = $props();
@@ -37,6 +41,8 @@
     hasFiles={files.length > 0}
     {isLoading}
     {isError}
+    {progressStatus}
+    {progressPercent}
   />
 
   <div class="grid grid-cols-[1fr_auto_1fr] relative">
