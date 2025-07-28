@@ -62,11 +62,15 @@
 
   onMount(async () => {
     isLoading = true;
+    progressStatus = "Checking for updates...";
+    progressPercent = 25;
     try {
       await checkForAppUpdates(false);
     } catch (error) {
       console.error(`Error updating: ${error}`);
     }
+    progressStatus = "Loading saved config...";
+    progressPercent = 50;
     const storedTime = localStorage.getItem(KEY_time);
     const storedBit = localStorage.getItem(KEY_bit);
 
@@ -92,6 +96,9 @@
     dropListener = await getCurrentWebview().onDragDropEvent((event) => {
       isOver = event.payload.type === "over";
     });
+
+    progressStatus = "Load FFmpeg...";
+    progressPercent = 75;
 
     ffmpeg = new FFmpeg();
     await loadffmpeg();
