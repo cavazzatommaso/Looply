@@ -27,6 +27,8 @@
   let isLoading = false;
   let isReady = false;
   let isError = false;
+  let progressStatus: string = "";
+  let progressPercent: number = 0;
 
   // File and GIF state
   let files: UIFile[] = [];
@@ -149,112 +151,154 @@
 
     isLoading = true;
     isError = false;
-
-    ffmpeg.terminate();
-    await loadffmpeg();
-
-    const tempDir = "/tmp";
-
-    const sizes = await Promise.all(files.map((f) => getImageSize(f.file)));
-    let maxWidth = 0;
-    let maxHeight = 0;
-    for (const size of sizes) {
-      if (size.width > maxWidth) maxWidth = size.width;
-      if (size.height > maxHeight) maxHeight = size.height;
-    }
-
-    const pngFileNames = [];
-
-    for (const [i, file] of files.entries()) {
-      const ext = file.file.name.split(".").pop() || "jpeg";
-      const inputName = `${tempDir}/img_original_${i}.${ext}`;
-      const pngName = `${tempDir}/img${i}.png`;
-      pngFileNames.push(pngName);
-
-      try {
-        await ffmpeg.writeFile(inputName, await fetchFile(file.file));
-
-        await ffmpeg.exec([
-          "-i",
-          inputName,
-          "-vf",
-          `scale=${maxWidth}:${maxHeight}:force_original_aspect_ratio=decrease,pad=${maxWidth}:${maxHeight}:(ow-iw)/2:(oh-ih)/2:color=black@0`,
-          "-pix_fmt",
-          "rgba",
-          pngName,
-        ]);
-      } catch (e) {
-        console.error("Error processing image:", file.file.name, e);
-        isError = true;
-        isLoading = false;
-        return;
-      } finally {
-        try {
-          await ffmpeg.deleteFile(inputName);
-        } catch (delError) {
-          console.warn(`Could not delete ${inputName}:`, delError);
-        }
-      }
-    }
-
-    const fps = (1 / $timeValue).toFixed(2);
-    const colors = $bitDepthValue;
-    const paletteName = `${tempDir}/palette.png`;
+    progressStatus = "Preparing FFmpeg...";
+    progressPercent = 0;
 
     try {
-      await ffmpeg.exec([
-        "-framerate",
-        `${fps}`,
-        "-start_number",
-        "0",
-        "-i",
-        `${tempDir}/img%d.png`,
-        "-vf",
-        `palettegen=max_colors=${colors}`,
-        paletteName,
-      ]);
+      ffmpeg.terminate();
+      await loadffmpeg();
 
-      await ffmpeg.exec([
-        "-framerate",
-        `${fps}`,
-        "-start_number",
-        "0",
-        "-i",
-        `${tempDir}/img%d.png`,
-        "-i",
-        paletteName,
-        "-lavfi",
-        "paletteuse=dither=bayer:bayer_scale=4.4",
-        "-loop",
-        "0",
-        "output.gif",
-      ]);
+      progressStatus = "Analyzing images...";
+      progressPercent = 10;
 
-      const data = await ffmpeg.readFile("output.gif");
-      if (data.length === 0) throw new Error("Conversion failed");
-      generatedGif = URL.createObjectURL(
-        new Blob([data], { type: "image/gif" }),
-      );
-    } catch (error) {
-      generatedGif = "";
-      isError = true;
-      console.error("FFmpeg conversion error:", error);
-    } finally {
-      for (const pngFile of pngFileNames) {
+      const tempDir = "/tmp";
+      const totalSteps = files.length + 3; // +3 for palette generation, gif creation, and cleanup
+      let currentStep = 1;
+
+      const sizes = await Promise.all(files.map((f) => getImageSize(f.file)));
+      let maxWidth = 0;
+      let maxHeight = 0;
+      for (const size of sizes) {
+        if (size.width > maxWidth) maxWidth = size.width;
+        if (size.height > maxHeight) maxHeight = size.height;
+      }
+
+      progressStatus = "Processing images...";
+      progressPercent = 20;
+      const pngFileNames = [];
+
+      for (const [i, file] of files.entries()) {
+        progressStatus = `Processing image ${i + 1} of ${files.length}...`;
+        progressPercent = 20 + (currentStep / totalSteps) * 50;
+        const ext = file.file.name.split(".").pop() || "jpeg";
+        const inputName = `${tempDir}/img_original_${i}.${ext}`;
+        const pngName = `${tempDir}/img${i}.png`;
+        pngFileNames.push(pngName);
+
         try {
-          await ffmpeg.deleteFile(pngFile);
+          await ffmpeg.writeFile(inputName, await fetchFile(file.file));
+
+          await ffmpeg.exec([
+            "-i",
+            inputName,
+            "-vf",
+            `scale=${maxWidth}:${maxHeight}:force_original_aspect_ratio=decrease,pad=${maxWidth}:${maxHeight}:(ow-iw)/2:(oh-ih)/2:color=black@0`,
+            "-pix_fmt",
+            "rgba",
+            pngName,
+          ]);
+        } catch (e) {
+          console.error("Error processing image:", file.file.name, e);
+          isError = true;
+          isLoading = false;
+          progressStatus = "";
+          progressPercent = 0;
+          return;
+        } finally {
+          try {
+            await ffmpeg.deleteFile(inputName);
+          } catch (delError) {
+            console.warn(`Could not delete ${inputName}:`, delError);
+          }
+        }
+        currentStep++;
+      }
+
+      const fps = (1 / $timeValue).toFixed(2);
+      const colors = $bitDepthValue;
+      const paletteName = `${tempDir}/palette.png`;
+
+      progressStatus = "Generating color palette...";
+      progressPercent = 75;
+
+      try {
+        await ffmpeg.exec([
+          "-framerate",
+          `${fps}`,
+          "-start_number",
+          "0",
+          "-i",
+          `${tempDir}/img%d.png`,
+          "-vf",
+          `palettegen=max_colors=${colors}`,
+          paletteName,
+        ]);
+
+        progressStatus = "Creating GIF...";
+        progressPercent = 85;
+
+        await ffmpeg.exec([
+          "-framerate",
+          `${fps}`,
+          "-start_number",
+          "0",
+          "-i",
+          `${tempDir}/img%d.png`,
+          "-i",
+          paletteName,
+          "-lavfi",
+          "paletteuse=dither=bayer:bayer_scale=4.4",
+          "-loop",
+          "0",
+          "output.gif",
+        ]);
+
+        progressStatus = "Finalizing...";
+        progressPercent = 95;
+
+        const data = await ffmpeg.readFile("output.gif");
+        if (data.length === 0) throw new Error("Conversion failed");
+        generatedGif = URL.createObjectURL(
+          new Blob([data], { type: "image/gif" }),
+        );
+
+        progressStatus = "Complete!";
+        progressPercent = 100;
+      } catch (error) {
+        generatedGif = "";
+        isError = true;
+        progressStatus = "";
+        progressPercent = 0;
+        console.error("FFmpeg conversion error:", error);
+      } finally {
+        for (const pngFile of pngFileNames) {
+          try {
+            await ffmpeg.deleteFile(pngFile);
+          } catch (delError) {
+            console.warn(`Could not delete ${pngFile}:`, delError);
+          }
+        }
+        try {
+          await ffmpeg.deleteFile(paletteName);
         } catch (delError) {
-          console.warn(`Could not delete ${pngFile}:`, delError);
+          console.warn(`Could not delete ${paletteName}:`, delError);
         }
       }
-      try {
-        await ffmpeg.deleteFile(paletteName);
-      } catch (delError) {
-        console.warn(`Could not delete ${paletteName}:`, delError);
-      }
+    } catch (error) {
+      isError = true;
+      progressStatus = "";
+      progressPercent = 0;
+      console.error("Unexpected error:", error);
+    } finally {
+      isLoading = false;
+      // Reset progress after a short delay to show completion
+      setTimeout(() => {
+        if (!isLoading) {
+          progressStatus = "";
+          progressPercent = 0;
+        }
+      }, 1000);
     }
-
-    isLoading = false;
   }
 
   async function save_gif() {
@@ -319,6 +363,8 @@
         {isLoading}
         {isError}
         {generatedGif}
+        {progressStatus}
+        {progressPercent}
         {saveConfig}
         saveGif={save_gif}
       ></SettingsPanel>
