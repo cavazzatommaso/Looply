@@ -51,7 +51,7 @@
     position: { x: number; y: number };
   };
 
-  const baseURL = `/ffmpeg/${ffmpegConfig.version}`;
+  const baseURL = `/ffmpeg`;
 
   const debouncedCreateGif = debounce(() => {
     createGif();
