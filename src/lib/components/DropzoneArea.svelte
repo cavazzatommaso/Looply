@@ -53,21 +53,21 @@
       {#each files as file (file.id)}
         <div class={`relative p-2 group`}>
           {#if file}
-            <span class="absolute top-0 -left-2 block text-black"
+            <span class="absolute top-1 -left-1 -translate-x-1/2 block text-black"
               >{files.indexOf(file)}</span
             >
             <button
-              class="hidden z-100 absolute top-2 right-2 group-hover:flex w-4 aspect-square bg-gray-200 translate-x-1/2 -translate-y-1/2 rounded-xl items-center justify-center text-sky-500 text-sm cursor-pointer hover:scale-110 active:scale-50 duration-300"
+              class="hidden z-100 absolute top-2 right-2 group-hover:flex w-5 aspect-square bg-red-500 translate-x-1/2 -translate-y-1/2 rounded-sm items-center justify-center text-white text-sm cursor-pointer"
               onclick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
                 deleteFile(file.id);
-              }}><Trash /></button
+              }}><Trash  size={12}/></button
             >
             <img
               src={URL.createObjectURL(file.file)}
               alt={file.file.name}
-              class="relative object-fill rounded-md group-hover:mask-r-from-50% duration-300"
+              class="relative object-fill rounded-md"
             />
           {/if}
         </div>

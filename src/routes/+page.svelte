@@ -339,7 +339,7 @@
   <div class="h-full w-full bg-gray-200 rounded-md grid grid-cols-2 gap-1 p-2">
     {#if files.length > 0}
       <button
-        class="absolute top-10 right-1/2 translate-x-2 w-10 p-2 z-50 aspect-square bg-sky-400 rounded-full flex items-center justify-center text-white active:scale-75 hover:-rotate-90 duration-300 !cursor-pointer"
+        class="absolute top-10 right-1/2 translate-x-2 w-10 p-2 z-50 aspect-square bg-sky-400 rounded-full flex items-center justify-center text-white active:scale-75 hover:-rotate-[360deg] duration-300 !cursor-pointer"
         onclick={(e) => {
           e.stopPropagation();
           e.preventDefault();
