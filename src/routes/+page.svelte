@@ -34,6 +34,7 @@
   let files: UIFile[] = [];
   let generatedGif: string = "";
   let outputUrl: string | null = null;
+  let currentAbortController: AbortController | null = null;
 
   // Configuration state
   let timeValue: Writable<number> = writable(0.5);
@@ -156,14 +157,25 @@
       return;
     }
 
+    if (currentAbortController) {
+      currentAbortController.abort();
+    }
+
+    currentAbortController = new AbortController();
+    const signal = currentAbortController.signal;
+
     isLoading = true;
     isError = false;
     progressStatus = "Preparing FFmpeg...";
     progressPercent = 0;
 
     try {
+      if (signal.aborted) return;
+
       ffmpeg.terminate();
       await loadffmpeg();
+
+      if (signal.aborted) return;
 
       progressStatus = "Analyzing images...";
       progressPercent = 10;
@@ -180,11 +192,15 @@
         if (size.height > maxHeight) maxHeight = size.height;
       }
 
+      if (signal.aborted) return;
+
       progressStatus = "Processing images...";
       progressPercent = 20;
       const pngFileNames = [];
 
       for (const [i, file] of files.entries()) {
+        if (signal.aborted) return;
+
         progressStatus = `Processing image ${i + 1} of ${files.length}...`;
         progressPercent = 20 + (currentStep / totalSteps) * 50;
         const ext = file.file.name.split(".").pop() || "jpeg";
@@ -205,6 +221,8 @@
             pngName,
           ]);
         } catch (e) {
+          if (signal.aborted) return;
+
           console.error("Error processing image:", file.file.name, e);
           isError = true;
           isLoading = false;
@@ -213,13 +231,17 @@
           return;
         } finally {
           try {
-            await ffmpeg.deleteFile(inputName);
+            if (!signal.aborted) {
+              await ffmpeg.deleteFile(inputName);
+            }
           } catch (delError) {
             console.warn(`Could not delete ${inputName}:`, delError);
           }
         }
         currentStep++;
       }
+
+      if (signal.aborted) return;
 
       const fps = (1 / $timeValue).toFixed(2);
       const colors = $bitDepthValue;
@@ -241,6 +263,8 @@
           paletteName,
         ]);
 
+        if (signal.aborted) return;
+
         progressStatus = "Creating GIF...";
         progressPercent = 85;
 
@@ -260,6 +284,8 @@
           "output.gif",
         ]);
 
+        if (signal.aborted) return;
+
         progressStatus = "Finalizing...";
         progressPercent = 95;
 
@@ -272,39 +298,45 @@
         progressStatus = "Complete!";
         progressPercent = 100;
       } catch (error) {
+        if (signal.aborted) return;
         generatedGif = "";
         isError = true;
         progressStatus = "";
         progressPercent = 0;
         console.error("FFmpeg conversion error:", error);
       } finally {
-        for (const pngFile of pngFileNames) {
-          try {
-            await ffmpeg.deleteFile(pngFile);
-          } catch (delError) {
-            console.warn(`Could not delete ${pngFile}:`, delError);
+        if (!signal.aborted && ffmpeg.loaded) {
+          for (const pngFile of pngFileNames) {
+            try {
+              await ffmpeg.deleteFile(pngFile);
+            } catch (delError) {
+              console.warn(`Could not delete ${pngFile}:`, delError);
+            }
           }
-        }
-        try {
-          await ffmpeg.deleteFile(paletteName);
-        } catch (delError) {
-          console.warn(`Could not delete ${paletteName}:`, delError);
+          try {
+            await ffmpeg.deleteFile(paletteName);
+          } catch (delError) {
+            console.warn(`Could not delete ${paletteName}:`, delError);
+          }
         }
       }
     } catch (error) {
+      if (signal.aborted) return;
       isError = true;
       progressStatus = "";
       progressPercent = 0;
       console.error("Unexpected error:", error);
     } finally {
-      isLoading = false;
-      // Reset progress after a short delay to show completion
-      setTimeout(() => {
-        if (!isLoading) {
-          progressStatus = "";
-          progressPercent = 0;
-        }
-      }, 1000);
+      if (!signal.aborted) {
+        isLoading = false;
+        currentAbortController = null;
+        setTimeout(() => {
+          if (!isLoading) {
+            progressStatus = "";
+            progressPercent = 0;
+          }
+        }, 1000);
+      }
     }
   }
 
