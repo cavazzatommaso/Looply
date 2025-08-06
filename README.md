@@ -2,9 +2,9 @@
 
 <img src="https://github.com/cavazzatommaso/Looply/blob/main/static/app-icon.png?raw=true" width="200" />
 
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/cavazzatommaso/looply/main.yml)
 ![GitHub Release](https://img.shields.io/github/v/release/cavazzatommaso/looply)
 ![GitHub License](https://img.shields.io/github/license/cavazzatommaso/looply)
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/cavazzatommaso/looply/total)
 
 A simple cross-platform desktop app to create GIFs from image sequences.  
 Built with **Tauri**, **Svelte**, **Tailwind CSS**, and **[FFmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm)**
