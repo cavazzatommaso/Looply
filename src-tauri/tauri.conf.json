@@ -32,8 +32,8 @@
       "icons/icon.ico"
     ],
     "macOS": {
-        "signingIdentity": "-"
-      }
+      "signingIdentity": "-"
+    }
   },
   "plugins": {
     "updater": {
