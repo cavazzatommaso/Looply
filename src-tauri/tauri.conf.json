@@ -33,6 +33,9 @@
     ],
     "macOS": {
       "signingIdentity": "-"
+    },
+    "resources": {
+      "../src/lib/assets/ffmpeg-version.json": "ffmpeg-version.json"
     }
   },
   "plugins": {

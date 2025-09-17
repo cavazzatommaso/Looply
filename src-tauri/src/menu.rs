@@ -12,19 +12,29 @@ struct FFmpegVersion {
 }
 
 fn get_ffmpeg_version<R: Runtime>(app: &AppHandle<R>) -> String {
-    // Try to resolve the resource path for the JSON file
     match app.path().resolve(
-        "../src/lib/assets/ffmpeg-version.json",
+        "ffmpeg-version.json",  // Use the full path as specified in resources
         tauri::path::BaseDirectory::Resource,
     ) {
-        Ok(path) => match fs::read_to_string(&path) {
-            Ok(content) => match serde_json::from_str::<FFmpegVersion>(&content) {
-                Ok(ffmpeg_info) => format!("FFmpeg version: {}", ffmpeg_info.version),
-                Err(_) => "FFmpeg version: Unknown".to_string(),
-            },
-            Err(_) => "FFmpeg version: Unknown".to_string(),
+        Ok(path) => {
+            println!("Resolved path: {:?}", path);
+            match fs::read_to_string(&path) {
+                Ok(content) => {
+                    match serde_json::from_str::<FFmpegVersion>(&content) {
+                        Ok(ffmpeg_info) => format!("FFmpeg version: {}", ffmpeg_info.version),
+                        Err(e) => {
+                            "FFmpeg version: Unknown".to_string()
+                        }
+                    }
+                },
+                Err(e) => {
+                    "FFmpeg version: Unknown".to_string()
+                }
+            }
         },
-        Err(_) => "FFmpeg version: Unknown".to_string(),
+        Err(e) => {
+            "FFmpeg version: Unknown".to_string()
+        }
     }
 }
 
